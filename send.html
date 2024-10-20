@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Send Message to IP and Port</title>
+  </head>
+  <body>
+    <h2>Send Message</h2>
+
+    <form id="messageForm">
+      <label for="ip">IP Address:</label><br />
+      <input
+        type="text"
+        id="ip"
+        name="ip"
+        value=""
+        placeholder="Enter IP address"
+      /><br /><br />
+
+      <label for="port">Port:</label><br />
+      <input
+        type="number"
+        id="port"
+        name="port"
+        value="12345"
+        placeholder="Enter Port number"
+      /><br /><br />
+
+      <label for="message">Message:</label><br />
+      <textarea
+        id="message"
+        name="message"
+        rows="4"
+        cols="50"
+        placeholder="Enter your message"
+      ></textarea
+      ><br /><br />
+
+      <input type="submit" value="Send Message" />
+    </form>
+
+    <p id="status"></p>
+
+    <script>
+      let socket = null;
+
+      document
+        .getElementById("messageForm")
+        .addEventListener("submit", function (event) {
+          event.preventDefault();
+
+          const ip = document.getElementById("ip").value;
+          const port = document.getElementById("port").value;
+          const message = document.getElementById("message").value;
+
+          if (!ip || !port || !message) {
+            document.getElementById("status").innerText =
+              "Please fill out all fields.";
+            return;
+          }
+
+          if (!socket || socket.readyState === WebSocket.CLOSED) {
+            socket = new WebSocket(`ws://${ip}:${port}`);
+
+            socket.onopen = function () {
+              console.log("WebSocket connection opened");
+              sendMessage(message);
+            };
+
+            socket.onmessage = function (event) {
+              document.getElementById(
+                "status"
+              ).innerText = `Server response: ${event.data}`;
+            };
+
+            socket.onerror = function () {
+              document.getElementById("status").innerText =
+                "Failed to connect to server.";
+            };
+
+            socket.onclose = function () {
+              console.log("WebSocket connection closed");
+            };
+          } else if (socket.readyState === WebSocket.OPEN) {
+            sendMessage(message);
+          }
+        });
+
+      function sendMessage(message) {
+        socket.send(message);
+        document.getElementById("status").innerText =
+          "Message sent successfully.";
+        document.getElementById("message").value = ""; // Clear only the message input
+      }
+    </script>
+  </body>
+</html>
